@@ -145,3 +145,11 @@ def train_experiment(
             serialization_format="pickle"
         )
         return accuracy
+    
+train_experiment(
+    learning_rate=0.001,
+    batch_size=64,
+    epochs=10,
+    hidden1=128,
+    hidden2=64
+)

@@ -1,0 +1,23 @@
+artifact_path: file:C:/Users/Asus/Documents/Formation ODC & IngeData/Module 5/MLOps/mini-mlops/mlruns/1/models/m-ae7b6ae174a54ec6b4712197fa55bbd6/artifacts
+flavors:
+  python_function:
+    config:
+      device: null
+    data: data
+    env:
+      conda: conda.yaml
+      virtualenv: python_env.yaml
+    loader_module: mlflow.pytorch
+    pickle_module_name: mlflow.pytorch.pickle_module
+    python_version: 3.13.15
+  pytorch:
+    code: null
+    model_data: data
+    pytorch_version: 2.14.1+cpu
+mlflow_version: 3.16.1
+model_id: m-ae7b6ae174a54ec6b4712197fa55bbd6
+model_size_bytes: 444569
+model_uuid: m-ae7b6ae174a54ec6b4712197fa55bbd6
+prompts: null
+run_id: 181adea047a94c06858dd3a574e10182
+utc_time_created: '2026-10-01 13:36:21.659774'
