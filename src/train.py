@@ -77,8 +77,8 @@ with mlflow.start_run():
     mlflow.log_param("learning_rate", 0.001)
     mlflow.log_param("batch_size", 64)
     mlflow.log_param("epochs", epochs)
-    
     for epoch in range(epochs):
+        
         model.train()
         total_loss = 0
         for images, labels in train_loader:
@@ -91,6 +91,11 @@ with mlflow.start_run():
             optimizer.step()
             total_loss += loss.item()
         average_loss = total_loss / len(train_loader)
+        mlflow.log_metric(
+            "train_loss",
+            average_loss,
+            step=epoch
+        )
         print(
             f"Epoch {epoch + 1} "
             f"Loss: {average_loss:.4f}"
