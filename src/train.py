@@ -7,6 +7,10 @@ import mlflow
 import mlflow.pytorch
 
 
+mlflow.set_experiment(
+    "Fashion-MNIST"
+)
+
 class NeuralNetwork(nn.Module):
     def __init__(self):
         super().__init__()
@@ -69,25 +73,29 @@ optimizer = optim.Adam(
     lr=0.001
 )
 epochs = 3
-
-for epoch in range(epochs):
-    model.train()
-    total_loss = 0
-    for images, labels in train_loader:
-        images = images.to(device)
-        labels = labels.to(device)
-        optimizer.zero_grad()
-        outputs = model(images)
-        loss = criterion(outputs, labels)
-        loss.backward()
-        optimizer.step()
-        total_loss += loss.item()
-    average_loss = total_loss / len(train_loader)
-    print(
-        f"Epoch {epoch + 1} "
-        f"Loss: {average_loss:.4f}"
-    )
+with mlflow.start_run():
+    mlflow.log_param("learning_rate", 0.001)
+    mlflow.log_param("batch_size", 64)
+    mlflow.log_param("epochs", epochs)
     
+    for epoch in range(epochs):
+        model.train()
+        total_loss = 0
+        for images, labels in train_loader:
+            images = images.to(device)
+            labels = labels.to(device)
+            optimizer.zero_grad()
+            outputs = model(images)
+            loss = criterion(outputs, labels)
+            loss.backward()
+            optimizer.step()
+            total_loss += loss.item()
+        average_loss = total_loss / len(train_loader)
+        print(
+            f"Epoch {epoch + 1} "
+            f"Loss: {average_loss:.4f}"
+        )
+##evaluation
 model.eval()
 correct = 0
 total = 0
