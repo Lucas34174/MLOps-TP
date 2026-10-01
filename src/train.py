@@ -19,3 +19,28 @@ class NeuralNetwork(nn.Module):
 def forward(self, x):
     x = self.flatten(x)
     return self.network(x)
+##Chargement des données
+transform = transforms.ToTensor()
+
+train_dataset = datasets.FashionMNIST(
+    root="data/raw",
+    train=True,
+    transform=transform
+)
+
+test_dataset = datasets.FashionMNIST(
+    root="data/raw",
+    train=False,
+    transform=transform
+)
+
+train_loader = DataLoader(
+    train_dataset,
+    batch_size=64,
+    shuffle=True
+)
+
+test_loader = DataLoader (
+    dataset=test_dataset,
+    batch_size=64
+)
