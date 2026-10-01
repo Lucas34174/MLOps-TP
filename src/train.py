@@ -126,5 +126,6 @@ with mlflow.start_run():
     ##Enregistrement du modèle
     mlflow.pytorch.log_model(
         model,
-        name="model"
+        name="model",
+        serialization_format="pickle"
     )
