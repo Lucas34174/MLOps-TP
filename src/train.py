@@ -73,12 +73,12 @@ optimizer = optim.Adam(
     lr=0.001
 )
 epochs = 3
+##Ajout du MLFlow
 with mlflow.start_run():
     mlflow.log_param("learning_rate", 0.001)
     mlflow.log_param("batch_size", 64)
     mlflow.log_param("epochs", epochs)
     for epoch in range(epochs):
-        
         model.train()
         total_loss = 0
         for images, labels in train_loader:
@@ -91,6 +91,7 @@ with mlflow.start_run():
             optimizer.step()
             total_loss += loss.item()
         average_loss = total_loss / len(train_loader)
+        ##Enregistrement de la Loss
         mlflow.log_metric(
             "train_loss",
             average_loss,
@@ -116,8 +117,14 @@ with mlflow.start_run():
                 predictions == labels
             ).sum().item()
         accuracy = correct / total
+        ## Enregistrement de l'Accuracy
         mlflow.log_metric(
             "test_accuracy",
             accuracy
         )
         print(f"Accuracy : {accuracy:.4f}")
+    ##Enregistrement du modèle
+    mlflow.pytorch.log_model(
+        model,
+        name="model"
+    )
