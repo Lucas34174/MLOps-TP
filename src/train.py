@@ -6,23 +6,28 @@ from torchvision import datasets, transforms
 import mlflow
 import mlflow.pytorch
 
-
 mlflow.set_experiment(
     "Fashion-MNIST"
 )
 
+device = (
+    "cuda" if torch.cuda.is_available()
+    else "mps" if torch.backends.mps.is_available()
+    else "cpu"
+)
+##Définition du modèle
 class NeuralNetwork(nn.Module):
-    def __init__(self):
+    def __init__(self, hidden1=128, hidden2=64):
         super().__init__()
         self.flatten = nn.Flatten()
         self.network = nn.Sequential(
-        nn.Linear(28 * 28, 128),
-        nn.ReLU(),
-        nn.Linear(128, 64),
-        nn.ReLU(),
-        nn.Linear(64, 10)
-    )
-        
+            nn.Linear(28 * 28, hidden1),
+            nn.ReLU(),
+            nn.Linear(hidden1, hidden2),
+            nn.ReLU(),
+            nn.Linear(hidden2, 10)
+        )
+
     def forward(self, x):
         x = self.flatten(x)
         return self.network(x)
@@ -42,80 +47,90 @@ test_dataset = datasets.FashionMNIST(
     transform=transform
 )
 
-train_loader = DataLoader(
-    train_dataset,
+print("Train :", len(train_dataset))
+print("Test  :", len(test_dataset))
+
+##Fonction d'entrainement
+def train_experiment(
+    learning_rate=0.001,
     batch_size=64,
-    shuffle=True
-)
+    epochs=3,
+    hidden1=128,
+    hidden2=64
+):
+    train_loader = DataLoader(
+        train_dataset,
+        batch_size=batch_size,
+        shuffle=True
+    )
 
-test_loader = DataLoader (
-    dataset=test_dataset,
-    batch_size=64
-)
+    test_loader = DataLoader (
+        dataset=test_dataset,
+        batch_size=batch_size
+    )
 
-##Entraînement du modèle
-device = (
-    "mps"
-    if torch.backends.mps.is_available()
-    else "cuda"
-    if torch.cuda.is_available()
-    else "cpu"
-)
+    ##Entraînement du modèle
 
-print("Device :", device)
+    print("Device :", device)
 
-model = NeuralNetwork().to(device)
+    model = NeuralNetwork(
+        hidden1=hidden1,
+        hidden2=hidden2
+    ).to(device)
 
-criterion = nn.CrossEntropyLoss()
+    criterion = nn.CrossEntropyLoss()
 
-optimizer = optim.Adam(
-    model.parameters(),
-    lr=0.001
-)
-epochs = 3
-##Ajout du MLFlow
-with mlflow.start_run():
-    mlflow.log_param("learning_rate", 0.001)
-    mlflow.log_param("batch_size", 64)
-    mlflow.log_param("epochs", epochs)
-    for epoch in range(epochs):
-        model.train()
-        total_loss = 0
-        for images, labels in train_loader:
-            images = images.to(device)
-            labels = labels.to(device)
-            optimizer.zero_grad()
-            outputs = model(images)
-            loss = criterion(outputs, labels)
-            loss.backward()
-            optimizer.step()
-            total_loss += loss.item()
-        average_loss = total_loss / len(train_loader)
-        ##Enregistrement de la Loss
-        mlflow.log_metric(
-            "train_loss",
-            average_loss,
-            step=epoch
-        )
-        print(
-            f"Epoch {epoch + 1} "
-            f"Loss: {average_loss:.4f}"
-        )
-##evaluation
-    model.eval()
-    correct = 0
-    total = 0
+    optimizer = optim.Adam(
+        model.parameters(),
+        lr=learning_rate
+    )
+    
+    ##Ajout du MLFlow
+    with mlflow.start_run():
+        mlflow.log_param("learning_rate", learning_rate )
+        mlflow.log_param("batch_size", batch_size)
+        mlflow.log_param("epochs", epochs)
+        mlflow.log_param("hidden1", hidden1)
+        mlflow.log_param("hidden2", hidden2)
 
-    with torch.no_grad():
-        for images, labels in test_loader:
-            images = images.to(device)
-            labels = labels.to(device)
-            outputs = model(images)
-            predictions = outputs.argmax(dim=1)
-            total += labels.size(0)
-            correct += (
-                predictions == labels
-            ).sum().item()
+        for epoch in range(epochs):
+            model.train()
+            total_loss = 0
+            for images, labels in train_loader:
+                images = images.to(device)
+                labels = labels.to(device)
+                optimizer.zero_grad()
+                outputs = model(images)
+                loss = criterion(outputs, labels)
+                loss.backward()
+                optimizer.step()
+                total_loss += loss.item()
+            average_loss = total_loss / len(train_loader)
+            ##Enregistrement de la Loss
+            mlflow.log_metric(
+                "train_loss",
+                average_loss,
+                step=epoch
+            )
+            print(
+                f"Epoch {epoch + 1} "
+                f"Loss: {average_loss:.4f}"
+            )
+    ##evaluation
+        model.eval()
+        correct = 0
+        total = 0
+
+        with torch.no_grad():
+            for images, labels in test_loader:
+                images = images.to(device)
+                labels = labels.to(device)
+                outputs = model(images)
+                predictions = outputs.argmax(dim=1)
+                total += labels.size(0)
+                correct += (
+                    predictions == labels
+                ).sum().item()
         accuracy = correct / total
         ## Enregistrement de l'Accuracy
         mlflow.log_metric(
@@ -123,9 +138,10 @@ with mlflow.start_run():
             accuracy
         )
         print(f"Accuracy : {accuracy:.4f}")
-    ##Enregistrement du modèle
-    mlflow.pytorch.log_model(
-        model,
-        name="model",
-        serialization_format="pickle"
-    )
+        ##Enregistrement du modèle
+        mlflow.pytorch.log_model(
+            model,
+            name="model",
+            serialization_format="pickle"
+        )
+        return accuracy
