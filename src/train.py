@@ -3,6 +3,9 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader
 from torchvision import datasets, transforms
+import mlflow
+import mlflow.pytorch
+
 
 class NeuralNetwork(nn.Module):
     def __init__(self):
@@ -14,11 +17,12 @@ class NeuralNetwork(nn.Module):
         nn.Linear(128, 64),
         nn.ReLU(),
         nn.Linear(64, 10)
-)
+    )
         
-def forward(self, x):
-    x = self.flatten(x)
-    return self.network(x)
+    def forward(self, x):
+        x = self.flatten(x)
+        return self.network(x)
+
 ##Chargement des données
 transform = transforms.ToTensor()
 
@@ -83,3 +87,20 @@ for epoch in range(epochs):
         f"Epoch {epoch + 1} "
         f"Loss: {average_loss:.4f}"
     )
+    
+model.eval()
+correct = 0
+total = 0
+
+with torch.no_grad():
+    for images, labels in test_loader:
+        images = images.to(device)
+        labels = labels.to(device)
+        outputs = model(images)
+        predictions = outputs.argmax(dim=1)
+        total += labels.size(0)
+        correct += (
+            predictions == labels
+        ).sum().item()
+    accuracy = correct / total
+    print(f"Accuracy : {accuracy:.4f}")
