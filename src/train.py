@@ -101,19 +101,23 @@ with mlflow.start_run():
             f"Loss: {average_loss:.4f}"
         )
 ##evaluation
-model.eval()
-correct = 0
-total = 0
+    model.eval()
+    correct = 0
+    total = 0
 
-with torch.no_grad():
-    for images, labels in test_loader:
-        images = images.to(device)
-        labels = labels.to(device)
-        outputs = model(images)
-        predictions = outputs.argmax(dim=1)
-        total += labels.size(0)
-        correct += (
-            predictions == labels
-        ).sum().item()
-    accuracy = correct / total
-    print(f"Accuracy : {accuracy:.4f}")
+    with torch.no_grad():
+        for images, labels in test_loader:
+            images = images.to(device)
+            labels = labels.to(device)
+            outputs = model(images)
+            predictions = outputs.argmax(dim=1)
+            total += labels.size(0)
+            correct += (
+                predictions == labels
+            ).sum().item()
+        accuracy = correct / total
+        mlflow.log_metric(
+            "test_accuracy",
+            accuracy
+        )
+        print(f"Accuracy : {accuracy:.4f}")
